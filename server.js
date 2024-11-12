@@ -34,6 +34,7 @@ mongoose
 //   .catch((err) => {
 //     console.log('ERROR: ', err);
 //   });
+console.log(`Environment: ${process.env.NODE_ENV}`);
 
 app.listen(process.env.PORT, () => {
   console.log('listening...');
