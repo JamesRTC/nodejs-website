@@ -2,6 +2,18 @@ const AppError = require('./../utils/appError');
 
 const handleCastErrorDB = (err) => {
   const message = `Invalid ${err.path}: ${err.value}`;
+  const appError = new AppError(message, 400);
+  return appError;
+};
+
+// const handleDuplicateFieldDB = (err) => {
+//   // const value = err.keyValue ? JSON.stringify(err.keyValue) : 'unknown value';
+//   const message = `Duplicate field value. Please use another value.`;
+//   return new AppError(message, 400);
+// };
+
+const handleValidationErrorDB = (err) => {
+  const message = `invalid input data: ${err.message}`;
   return new AppError(message, 400);
 };
 
@@ -23,7 +35,7 @@ const sendErrorProd = (err, res) => {
     });
   } else {
     // Programming or unknown error: don't leak details
-    console.error('ERROR 💥', err);
+    // console.error('ERROR 💥', err);
 
     res.status(500).json({
       status: 'error',
@@ -40,10 +52,18 @@ module.exports = (err, req, res, next) => {
     sendErrorDev(err, res);
   } else if (process.env.NODE_ENV === 'production') {
     let error = { ...err };
+    error.name = err.name;
+    error.message = err.message;
+    // error.code = 11000;
 
-    // error.message = err.message; // Ensure message is included in production error handling
+    if (error.name === 'CastError') {
+      error = handleCastErrorDB(error);
+    }
 
-    if (error.name === 'CastError') error = handleCastErrorDB(error);
+    // if (error.name === 'ValidationError') error = handleDuplicateFieldDB(error);
+
+    if (error.name === 'ValidationError')
+      error = handleValidationErrorDB(error);
 
     sendErrorProd(error, res);
   }
